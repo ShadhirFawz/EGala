@@ -36,6 +36,11 @@ msbuild.wrn
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
+# Ignore the real config file
+appsettings.json
+
+# But DO NOT ignore the template
+!appsettings.Template.json
 
 # Rider
 .idea/
