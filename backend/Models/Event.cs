@@ -1,5 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace backend.Models
 {
@@ -50,6 +51,13 @@ namespace backend.Models
 
         [BsonElement("date")]
         public DateTime Date { get; set; }
+
+        [BsonElement("location")]
+        public GeoJsonPoint<GeoJson2DCoordinates>? Location { get; set; }
+
+        // Optional: human-readable address
+        [BsonElement("address")]
+        public string? Address { get; set; }
 
         [BsonElement("ticketPackages")]
         public List<TicketPackage> TicketPackages { get; set; } = new(); // up to 3

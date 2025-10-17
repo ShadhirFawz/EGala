@@ -12,6 +12,10 @@ namespace backend.Repositories
             var client = new MongoClient(config["MongoDbSettings:ConnectionString"]);
             var db = client.GetDatabase(config["MongoDbSettings:DatabaseName"]);
             _events = db.GetCollection<Event>("events");
+
+            // Create geospatial index for location
+            var indexKeys = Builders<Event>.IndexKeys.Geo2DSphere(e => e.Location);
+            _events.Indexes.CreateOne(new CreateIndexModel<Event>(indexKeys));
         }
 
         public async Task<List<Event>> GetPublicEventsAsync(string? category = null, string? location = null, string? keyword = null)

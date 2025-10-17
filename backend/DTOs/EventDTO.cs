@@ -20,7 +20,10 @@ namespace backend.DTOs
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string Category { get; set; } = null!;
-        public List<string> Locations { get; set; } = new();
+        // Coordinates for map
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
+        public string Address { get; set; } = null!;
         public DateTime Date { get; set; }
         public List<TicketPackageDTO> TicketPackages { get; set; } = new();
         public List<SeatDTO>? SeatLayout { get; set; }

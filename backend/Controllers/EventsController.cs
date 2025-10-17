@@ -3,6 +3,7 @@ using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver.GeoJsonObjectModel;
 using System.Security.Claims;
 
 namespace backend.Controllers
@@ -43,7 +44,10 @@ namespace backend.Controllers
                 Title = dto.Title,
                 Description = dto.Description,
                 Category = dto.Category,
-                Locations = dto.Locations,
+                Address = dto.Address,
+                Location = new GeoJsonPoint<GeoJson2DCoordinates>(
+                    new GeoJson2DCoordinates(dto.Longitude, dto.Latitude)
+                ),
                 Date = dto.Date,
                 TicketPackages = dto.TicketPackages.Select(p => new TicketPackage
                 {
