@@ -4,6 +4,7 @@ using backend.Config;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,9 @@ builder.Services.Configure<MongoDbSettings>(
 
 // Dependency Injection
 builder.Services.AddSingleton<UserRepository>();
+builder.Services.AddSingleton<EventRepository>();
 builder.Services.AddSingleton<JwtService>();
+builder.Services.AddSingleton<EventService>();
 
 // JWT Setup
 var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]!);
@@ -39,7 +42,39 @@ builder.Services.AddAuthentication(opt =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Configure Swagger with JWT Support
+builder.Services.AddSwaggerGen(opt =>
+{
+    opt.SwaggerDoc("v1", new OpenApiInfo { Title = "Event Booking API", Version = "v1" });
+
+    // Add JWT Authentication to Swagger
+    opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+
+    opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("AllowFrontend",
