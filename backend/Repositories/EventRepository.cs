@@ -1,5 +1,6 @@
 using backend.Models;
 using MongoDB.Driver;
+using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace backend.Repositories
 {
@@ -36,6 +37,33 @@ namespace backend.Repositories
                 );
 
             return await _events.Find(filter).ToListAsync();
+        }
+
+        public async Task<List<Event>> GetNearbyEventsAsync(double latitude, double longitude, double radiusKm, string? category = null, string? keyword = null)
+        {
+            var point = new GeoJsonPoint<GeoJson2DCoordinates>(new GeoJson2DCoordinates(longitude, latitude));
+
+            var filterBuilder = Builders<Event>.Filter;
+            var filter = filterBuilder.GeoWithinCenterSphere(e => e.Location,
+                longitude,
+                latitude,
+                radiusKm / 6378.1 // convert km to radians (Earth radius ≈ 6378.1 km)
+            );
+
+            // Only show approved + published events
+            var baseFilter = filterBuilder.And(
+                filter,
+                filterBuilder.Eq(e => e.IsPublished, true)
+            );
+
+            // Optional filters
+            if (!string.IsNullOrEmpty(category))
+                baseFilter &= filterBuilder.Eq(e => e.Category, category);
+
+            if (!string.IsNullOrEmpty(keyword))
+                baseFilter &= filterBuilder.Regex(e => e.Title, new MongoDB.Bson.BsonRegularExpression(keyword, "i"));
+
+            return await _events.Find(baseFilter).ToListAsync();
         }
 
         public async Task<List<Event>> GetByOrganizerAsync(string organizerId) =>

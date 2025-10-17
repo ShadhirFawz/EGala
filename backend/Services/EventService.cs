@@ -30,6 +30,11 @@ namespace backend.Services
             await _repo.UpdateAsync(ev);
         }
 
+        public async Task<List<Event>> GetNearbyEventsAsync(double latitude, double longitude, double radiusKm, string? category, string? keyword)
+        {
+            return await _repo.GetNearbyEventsAsync(latitude, longitude, radiusKm, category, keyword);
+        }
+
         public async Task UpdateEventAsync(Event ev) => await _repo.UpdateAsync(ev);
     }
 }

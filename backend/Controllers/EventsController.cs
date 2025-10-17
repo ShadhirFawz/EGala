@@ -87,5 +87,23 @@ namespace backend.Controllers
             await _eventService.PublishEventAsync(id);
             return Ok("Event published successfully!");
         }
+
+        [HttpPost("nearby")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetNearbyEvents([FromBody] NearbySearchDTO dto)
+        {
+            var events = await _eventService.GetNearbyEventsAsync(
+                dto.Latitude,
+                dto.Longitude,
+                dto.RadiusKm,
+                dto.Category,
+                dto.Keyword
+            );
+
+            if (events.Count == 0)
+                return NotFound("No events found nearby.");
+
+            return Ok(events);
+        }
     }
 }
