@@ -14,23 +14,39 @@ namespace backend.Repositories
             _events = db.GetCollection<Event>("events");
         }
 
-        public async Task<List<Event>> GetAllApprovedAsync() =>
-            await _events.Find(e => e.IsApproved && e.IsPublished).ToListAsync();
+        public async Task<List<Event>> GetPublicEventsAsync(string? category = null, string? location = null, string? keyword = null)
+        {
+            var filterBuilder = Builders<Event>.Filter;
+            var filter = filterBuilder.Eq(e => e.IsPublished, true);
 
-        public async Task<List<Event>> GetAllPendingAsync() =>
-            await _events.Find(e => !e.IsApproved).ToListAsync();
+            if (!string.IsNullOrEmpty(category))
+                filter &= filterBuilder.Eq(e => e.Category, category);
 
-        public async Task<List<Event>> GetByOrganizerIdAsync(string organizerId) =>
+            if (!string.IsNullOrEmpty(location))
+                filter &= filterBuilder.AnyEq(e => e.Locations, location);
+
+            if (!string.IsNullOrEmpty(keyword))
+                filter &= filterBuilder.Or(
+                    filterBuilder.Regex(e => e.Title, new MongoDB.Bson.BsonRegularExpression(keyword, "i")),
+                    filterBuilder.Regex(e => e.Description, new MongoDB.Bson.BsonRegularExpression(keyword, "i"))
+                );
+
+            return await _events.Find(filter).ToListAsync();
+        }
+
+        public async Task<List<Event>> GetByOrganizerAsync(string organizerId) =>
             await _events.Find(e => e.OrganizerId == organizerId).ToListAsync();
 
         public async Task<Event?> GetByIdAsync(string id) =>
             await _events.Find(e => e.Id == id).FirstOrDefaultAsync();
 
-        public async Task CreateAsync(Event ev) =>
-            await _events.InsertOneAsync(ev);
+        public async Task CreateAsync(Event ev) => await _events.InsertOneAsync(ev);
 
-        public async Task UpdateAsync(Event ev) =>
+        public async Task UpdateAsync(Event ev)
+        {
+            ev.UpdatedAt = DateTime.UtcNow;
             await _events.ReplaceOneAsync(x => x.Id == ev.Id, ev);
+        }
 
         public async Task DeleteAsync(string id) =>
             await _events.DeleteOneAsync(e => e.Id == id);
