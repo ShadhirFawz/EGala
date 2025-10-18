@@ -17,6 +17,8 @@ builder.Services.AddSingleton<UserRepository>();
 builder.Services.AddSingleton<EventRepository>();
 builder.Services.AddSingleton<JwtService>();
 builder.Services.AddSingleton<EventService>();
+builder.Services.AddSingleton<WishlistRepository>();
+builder.Services.AddSingleton<WishlistService>();
 
 // JWT Setup
 var key = Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Key"]!);
