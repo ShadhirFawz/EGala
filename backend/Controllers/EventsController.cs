@@ -88,6 +88,59 @@ namespace backend.Controllers
             return Ok("Event published successfully!");
         }
 
+        // ORGANIZER: Update event details
+        [HttpPut("update/{id}")]
+        [Authorize(Roles = "Organizer")]
+        public async Task<IActionResult> UpdateEvent(string id, [FromBody] EventDTO dto)
+        {
+            var organizerId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                            ?? User.FindFirstValue(ClaimTypes.Email)!;
+
+            var updatedEvent = new Event
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Category = dto.Category,
+                Address = dto.Address,
+                Location = new MongoDB.Driver.GeoJsonObjectModel.GeoJsonPoint<MongoDB.Driver.GeoJsonObjectModel.GeoJson2DCoordinates>(
+                    new MongoDB.Driver.GeoJsonObjectModel.GeoJson2DCoordinates(dto.Longitude, dto.Latitude)
+                ),
+                Date = dto.Date,
+                TicketPackages = dto.TicketPackages.Select(p => new TicketPackage
+                {
+                    Name = p.Name,
+                    Price = p.Price,
+                    Capacity = p.Capacity,
+                    Materials = p.Materials
+                }).ToList(),
+                SeatLayout = dto.SeatLayout?.Select(s => new Seat { Row = s.Row, Col = s.Col }).ToList(),
+                Images = dto.Images ?? new List<string>(),
+                TotalCapacity = dto.TicketPackages.Sum(p => p.Capacity),
+                OrganizerId = organizerId,
+                IsPublished = dto.IsPublished
+            };
+
+            var result = await _eventService.UpdateEventAsync(id, updatedEvent);
+            if (!result) return NotFound("Event not found.");
+
+            return Ok("Event updated successfully!");
+        }
+
+        // ORGANIZER or ADMIN: Delete event
+        [HttpDelete("delete/{id}")]
+        [Authorize(Roles = "Organizer,Admin")]
+        public async Task<IActionResult> DeleteEvent(string id)
+        {
+            var isAdmin = User.IsInRole("Admin");
+            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                            ?? User.FindFirstValue(ClaimTypes.Email)!;
+
+            var success = await _eventService.DeleteEventAsync(id, requesterId, isAdmin);
+            if (!success) return Forbid("You are not authorized or event not found.");
+
+            return Ok("Event deleted successfully.");
+        }
+
         [HttpPost("nearby")]
         [AllowAnonymous]
         public async Task<IActionResult> GetNearbyEvents([FromBody] NearbySearchDTO dto)

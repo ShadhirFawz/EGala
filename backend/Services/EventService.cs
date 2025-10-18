@@ -30,6 +30,32 @@ namespace backend.Services
             await _repo.UpdateAsync(ev);
         }
 
+        public async Task<bool> UpdateEventAsync(string id, Event updatedEvent)
+        {
+            var existing = await _repo.GetByIdAsync(id);
+            if (existing == null) return false;
+
+            updatedEvent.Id = id;
+            updatedEvent.OrganizerId = existing.OrganizerId; // ensure ownership
+            updatedEvent.CreatedAt = existing.CreatedAt;
+            updatedEvent.UpdatedAt = DateTime.UtcNow;
+
+            await _repo.UpdateAsync(updatedEvent);
+            return true;
+        }
+
+        public async Task<bool> DeleteEventAsync(string id, string? requesterId = null, bool isAdmin = false)
+        {
+            var ev = await _repo.GetByIdAsync(id);
+            if (ev == null) return false;
+
+            // Allow only owner or admin
+            if (!isAdmin && ev.OrganizerId != requesterId) return false;
+
+            await _repo.DeleteAsync(id);
+            return true;
+        }
+
         public async Task<List<Event>> GetNearbyEventsAsync(double latitude, double longitude, double radiusKm, string? category, string? keyword)
         {
             return await _repo.GetNearbyEventsAsync(latitude, longitude, radiusKm, category, keyword);
