@@ -1,5 +1,7 @@
 using backend.Models;
+using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver.GeoJsonObjectModel;
 
 namespace backend.Repositories
@@ -14,12 +16,13 @@ namespace backend.Repositories
             var db = client.GetDatabase(config["MongoDbSettings:DatabaseName"]);
             _events = db.GetCollection<Event>("events");
 
-            // Create geospatial index for location
-            var indexKeys = Builders<Event>.IndexKeys.Geo2DSphere(e => e.Location);
+            // Create geospatial index for locations.coordinates (array field)
+            // Use string path because Locations is a nested array
+            var indexKeys = Builders<Event>.IndexKeys.Geo2DSphere("locations.coordinates");
             _events.Indexes.CreateOne(new CreateIndexModel<Event>(indexKeys));
         }
 
-        public async Task<List<Event>> GetPublicEventsAsync(string? category = null, string? location = null, string? keyword = null)
+        public async Task<List<Event>> GetPublicEventsAsync(string? category = null, string? locationName = null, string? keyword = null)
         {
             var filterBuilder = Builders<Event>.Filter;
             var filter = filterBuilder.Eq(e => e.IsPublished, true);
@@ -27,13 +30,14 @@ namespace backend.Repositories
             if (!string.IsNullOrEmpty(category))
                 filter &= filterBuilder.Eq(e => e.Category, category);
 
-            if (!string.IsNullOrEmpty(location))
-                filter &= filterBuilder.AnyEq(e => e.Locations, location);
+            if (!string.IsNullOrEmpty(locationName))
+                // match by location name inside Locations array
+                filter &= filterBuilder.ElemMatch(e => e.Locations, Builders<EventLocation>.Filter.Eq(l => l.Name, locationName));
 
             if (!string.IsNullOrEmpty(keyword))
                 filter &= filterBuilder.Or(
-                    filterBuilder.Regex(e => e.Title, new MongoDB.Bson.BsonRegularExpression(keyword, "i")),
-                    filterBuilder.Regex(e => e.Description, new MongoDB.Bson.BsonRegularExpression(keyword, "i"))
+                    filterBuilder.Regex(e => e.Title, new BsonRegularExpression(keyword, "i")),
+                    filterBuilder.Regex(e => e.Description, new BsonRegularExpression(keyword, "i"))
                 );
 
             return await _events.Find(filter).ToListAsync();
@@ -44,26 +48,44 @@ namespace backend.Repositories
             var point = new GeoJsonPoint<GeoJson2DCoordinates>(new GeoJson2DCoordinates(longitude, latitude));
 
             var filterBuilder = Builders<Event>.Filter;
-            var filter = filterBuilder.GeoWithinCenterSphere(e => e.Location,
-                longitude,
-                latitude,
-                radiusKm / 6378.1 // convert km to radians (Earth radius ≈ 6378.1 km)
-            );
 
-            // Only show approved + published events
-            var baseFilter = filterBuilder.And(
-                filter,
-                filterBuilder.Eq(e => e.IsPublished, true)
-            );
+            // Geo filter using $geoWithin for nested locations array
+            var geoFilter = new BsonDocument("$geoWithin",
+                new BsonDocument("$centerSphere",
+                    new BsonArray { new BsonArray { longitude, latitude }, radiusKm / 6378.1 }));
 
-            // Optional filters
+            // Base event filter
+            var baseFilter = filterBuilder.Eq(e => e.IsPublished, true);
+
             if (!string.IsNullOrEmpty(category))
                 baseFilter &= filterBuilder.Eq(e => e.Category, category);
 
             if (!string.IsNullOrEmpty(keyword))
-                baseFilter &= filterBuilder.Regex(e => e.Title, new MongoDB.Bson.BsonRegularExpression(keyword, "i"));
+                baseFilter &= filterBuilder.Or(
+                    filterBuilder.Regex(e => e.Title, new MongoDB.Bson.BsonRegularExpression(keyword, "i")),
+                    filterBuilder.Regex(e => e.Description, new MongoDB.Bson.BsonRegularExpression(keyword, "i"))
+                );
 
-            return await _events.Find(baseFilter).ToListAsync();
+            // Convert to BsonDocument safely using RenderArgs
+            var args = new RenderArgs<Event>(
+                BsonSerializer.SerializerRegistry.GetSerializer<Event>(),
+                BsonSerializer.SerializerRegistry
+            );
+
+            var combinedFilter = baseFilter.Render(args);
+
+            var rawFilter = new BsonDocument
+            {
+                {
+                    "$and", new BsonArray
+                    {
+                        combinedFilter,
+                        new BsonDocument("locations.coordinates", geoFilter)
+                    }
+                }
+            };
+
+            return await _events.Find(rawFilter).ToListAsync();
         }
 
         public async Task<List<Event>> GetByOrganizerAsync(string organizerId) =>

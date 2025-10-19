@@ -1,34 +1,33 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver.GeoJsonObjectModel;
+using System;
+using System.Collections.Generic;
 
 namespace backend.Models
 {
-    public class TicketPackage
+    public class EventLocation
     {
         [BsonElement("name")]
-        public string Name { get; set; } = null!; // e.g. "Silver", "Gold", "VIP"
+        public string Name { get; set; } = null!; // e.g. "Colombo Stadium"
 
-        [BsonElement("price")]
-        public double Price { get; set; }
-
-        [BsonElement("capacity")]
-        public int Capacity { get; set; }
-
-        [BsonElement("materials")]
-        public List<string> Materials { get; set; } = new(); // e.g. ["Mic", "Speakers"]
+        [BsonElement("coordinates")]
+        public GeoJsonPoint<GeoJson2DCoordinates> Coordinates { get; set; } = null!;
     }
 
-    public class Seat
+    public class SeatMatrix
     {
-        [BsonElement("row")]
-        public int Row { get; set; }
+        [BsonElement("seatType")]
+        public string SeatType { get; set; } = "Normal"; // "Normal" or "Special"
 
-        [BsonElement("col")]
-        public int Col { get; set; }
+        [BsonElement("rows")]
+        public int Rows { get; set; }
 
-        [BsonElement("isBooked")]
-        public bool IsBooked { get; set; } = false;
+        [BsonElement("cols")]
+        public int Cols { get; set; }
+
+        [BsonElement("pricePerSeat")]
+        public double PricePerSeat { get; set; } // 0, 5, or 10
     }
 
     public class Event
@@ -46,37 +45,29 @@ namespace backend.Models
         [BsonElement("category")]
         public string Category { get; set; } = null!;
 
+        // Multiple named locations with coordinates
         [BsonElement("locations")]
-        public List<string> Locations { get; set; } = new(); // multiple locations
+        public List<EventLocation> Locations { get; set; } = new();
 
-        [BsonElement("date")]
-        public DateTime Date { get; set; }
+        // Multiple available dates (organizer chooses possible dates)
+        [BsonElement("availableDates")]
+        public List<DateTime> AvailableDates { get; set; } = new();
 
-        [BsonElement("location")]
-        public GeoJsonPoint<GeoJson2DCoordinates>? Location { get; set; }
+        // Fixed organizing fee shown initially on event page
+        [BsonElement("organizingFee")]
+        public double OrganizingFee { get; set; } = 0.0;
 
-        // Optional: human-readable address
-        [BsonElement("address")]
-        public string? Address { get; set; }
+        // Seat definitions (matrices) for Normal and Special seats
+        [BsonElement("seatMatrices")]
+        public List<SeatMatrix> SeatMatrices { get; set; } = new();
 
-        [BsonElement("ticketPackages")]
-        public List<TicketPackage> TicketPackages { get; set; } = new(); // up to 3
-
-        [BsonElement("seatLayout")]
-        public List<Seat>? SeatLayout { get; set; } // optional
-
-        [BsonElement("totalCapacity")]
-        public int TotalCapacity { get; set; }
-
-        [BsonElement("bookedCount")]
-        public int BookedCount { get; set; } = 0;
+        [BsonElement("images")]
+        public List<string> Images { get; set; } = new(); // frontend uploads & sends URLs
 
         [BsonElement("organizerId")]
         public string OrganizerId { get; set; } = null!;
 
-        [BsonElement("images")]
-        public List<string> Images { get; set; } = new(); // URLs or file paths
-
+        // Event must be approved before publishing — creation sets false
         [BsonElement("isPublished")]
         public bool IsPublished { get; set; } = false;
 
@@ -86,7 +77,8 @@ namespace backend.Models
         [BsonElement("updatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
+        // calculated property — not saved
         [BsonIgnore]
-        public bool IsSoldOut => BookedCount >= TotalCapacity;
+        public bool IsSoldOut { get; set; } = false;
     }
 }

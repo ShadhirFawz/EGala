@@ -4,7 +4,9 @@ using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver.GeoJsonObjectModel;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace backend.Controllers
 {
@@ -31,7 +33,7 @@ namespace backend.Controllers
             return Ok(events);
         }
 
-        // ORGANIZER: Create event
+        // ORGANIZER: Create event (organizer does NOT add ticket packages)
         [HttpPost("create")]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> CreateEvent([FromBody] EventDTO dto)
@@ -44,27 +46,29 @@ namespace backend.Controllers
                 Title = dto.Title,
                 Description = dto.Description,
                 Category = dto.Category,
-                Address = dto.Address,
-                Location = new GeoJsonPoint<GeoJson2DCoordinates>(
-                    new GeoJson2DCoordinates(dto.Longitude, dto.Latitude)
-                ),
-                Date = dto.Date,
-                TicketPackages = dto.TicketPackages.Select(p => new TicketPackage
-                {
-                    Name = p.Name,
-                    Price = p.Price,
-                    Capacity = p.Capacity,
-                    Materials = p.Materials
-                }).ToList(),
-                SeatLayout = dto.SeatLayout?.Select(s => new Seat { Row = s.Row, Col = s.Col }).ToList(),
-                Images = dto.Images ?? new List<string>(),
-                TotalCapacity = dto.TicketPackages.Sum(p => p.Capacity),
                 OrganizerId = organizerId,
-                IsPublished = dto.IsPublished
+                OrganizingFee = dto.OrganizingFee,
+                Locations = dto.Locations.Select(l => new EventLocation
+                {
+                    Name = l.Name,
+                    Coordinates = new GeoJsonPoint<GeoJson2DCoordinates>(
+                        new GeoJson2DCoordinates(l.Longitude, l.Latitude)
+                    )
+                }).ToList(),
+                AvailableDates = dto.AvailableDates,
+                SeatMatrices = dto.SeatMatrices.Select(s => new SeatMatrix
+                {
+                    SeatType = s.SeatType,
+                    Rows = s.Rows,
+                    Cols = s.Cols,
+                    PricePerSeat = s.PricePerSeat
+                }).ToList(),
+                Images = dto.Images ?? new System.Collections.Generic.List<string>(),
+                IsPublished = false // auto false until approval
             };
 
             await _eventService.CreateEventAsync(newEvent);
-            return Ok("Event created successfully!");
+            return Ok("Event created successfully and awaiting approval!");
         }
 
         // ORGANIZER: View own events
@@ -79,7 +83,7 @@ namespace backend.Controllers
             return Ok(events);
         }
 
-        // ORGANIZER: Publish event
+        // ORGANIZER: Publish event (after admin approval — admin flow not implemented here)
         [HttpPut("publish/{id}")]
         [Authorize(Roles = "Organizer")]
         public async Task<IActionResult> PublishEvent(string id)
@@ -101,23 +105,25 @@ namespace backend.Controllers
                 Title = dto.Title,
                 Description = dto.Description,
                 Category = dto.Category,
-                Address = dto.Address,
-                Location = new MongoDB.Driver.GeoJsonObjectModel.GeoJsonPoint<MongoDB.Driver.GeoJsonObjectModel.GeoJson2DCoordinates>(
-                    new MongoDB.Driver.GeoJsonObjectModel.GeoJson2DCoordinates(dto.Longitude, dto.Latitude)
-                ),
-                Date = dto.Date,
-                TicketPackages = dto.TicketPackages.Select(p => new TicketPackage
-                {
-                    Name = p.Name,
-                    Price = p.Price,
-                    Capacity = p.Capacity,
-                    Materials = p.Materials
-                }).ToList(),
-                SeatLayout = dto.SeatLayout?.Select(s => new Seat { Row = s.Row, Col = s.Col }).ToList(),
-                Images = dto.Images ?? new List<string>(),
-                TotalCapacity = dto.TicketPackages.Sum(p => p.Capacity),
                 OrganizerId = organizerId,
-                IsPublished = dto.IsPublished
+                OrganizingFee = dto.OrganizingFee,
+                Locations = dto.Locations.Select(l => new EventLocation
+                {
+                    Name = l.Name,
+                    Coordinates = new GeoJsonPoint<GeoJson2DCoordinates>(
+                        new GeoJson2DCoordinates(l.Longitude, l.Latitude)
+                    )
+                }).ToList(),
+                AvailableDates = dto.AvailableDates,
+                SeatMatrices = dto.SeatMatrices.Select(s => new SeatMatrix
+                {
+                    SeatType = s.SeatType,
+                    Rows = s.Rows,
+                    Cols = s.Cols,
+                    PricePerSeat = s.PricePerSeat
+                }).ToList(),
+                Images = dto.Images ?? new System.Collections.Generic.List<string>(),
+                IsPublished = false // when updated, keep unpublished until approved/published explicitly
             };
 
             var result = await _eventService.UpdateEventAsync(id, updatedEvent);
@@ -141,9 +147,10 @@ namespace backend.Controllers
             return Ok("Event deleted successfully.");
         }
 
+        // NEARBY: find events around a point (by location coordinates inside locations array)
         [HttpPost("nearby")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetNearbyEvents([FromBody] NearbySearchDTO dto)
+        public async Task<IActionResult> GetNearbyEvents([FromBody] DTOs.NearbySearchDTO dto)
         {
             var events = await _eventService.GetNearbyEventsAsync(
                 dto.Latitude,
