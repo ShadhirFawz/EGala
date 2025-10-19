@@ -64,7 +64,8 @@ namespace backend.Controllers
                     PricePerSeat = s.PricePerSeat
                 }).ToList(),
                 Images = dto.Images ?? new System.Collections.Generic.List<string>(),
-                IsPublished = false // auto false until approval
+                IsApproved = false,
+                IsPublished = false
             };
 
             await _eventService.CreateEventAsync(newEvent);
@@ -81,6 +82,29 @@ namespace backend.Controllers
 
             var events = await _eventService.GetOrganizerEventsAsync(organizerId);
             return Ok(events);
+        }
+
+        // ADMIN: View all pending (not yet approved) events
+        [HttpGet("pending")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetPendingEvents()
+        {
+            var all = await _eventService.GetAllEventsAsync();
+            var pending = all.Where(e => !e.IsApproved).ToList();
+            return Ok(pending);
+        }
+
+        // ADMIN: Approve an event
+        [HttpPut("approve/{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ApproveEvent(string id)
+        {
+            var ev = await _eventService.GetByIdAsync(id);
+            if (ev == null) return NotFound("Event not found.");
+
+            ev.IsApproved = true;
+            await _eventService.UpdateEventAsync(ev);
+            return Ok("Event approved successfully!");
         }
 
         // ORGANIZER: Publish event (after admin approval — admin flow not implemented here)

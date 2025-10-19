@@ -23,14 +23,19 @@ namespace backend.Services
 
         public async Task<Event?> GetByIdAsync(string id) => await _repo.GetByIdAsync(id);
 
+        public async Task<List<Event>> GetAllEventsAsync() => await _repo.GetAllAsync();
+
         public async Task CreateEventAsync(Event ev) => await _repo.CreateAsync(ev);
 
         public async Task PublishEventAsync(string id)
         {
             var ev = await _repo.GetByIdAsync(id);
             if (ev == null) return;
-            ev.IsPublished = true;
-            await _repo.UpdateAsync(ev);
+            if (ev.IsApproved)
+            {
+                ev.IsPublished = true;
+                await _repo.UpdateAsync(ev);
+            }
         }
 
         public async Task<bool> UpdateEventAsync(string id, Event updatedEvent)

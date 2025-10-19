@@ -67,6 +67,9 @@ namespace backend.Models
         [BsonElement("organizerId")]
         public string OrganizerId { get; set; } = null!;
 
+        [BsonElement("isApproved")]
+        public bool IsApproved { get; set; } = false;
+
         // Event must be approved before publishing — creation sets false
         [BsonElement("isPublished")]
         public bool IsPublished { get; set; } = false;

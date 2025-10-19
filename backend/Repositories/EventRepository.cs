@@ -25,7 +25,11 @@ namespace backend.Repositories
         public async Task<List<Event>> GetPublicEventsAsync(string? category = null, string? locationName = null, string? keyword = null)
         {
             var filterBuilder = Builders<Event>.Filter;
-            var filter = filterBuilder.Eq(e => e.IsPublished, true);
+            var filter = filterBuilder.And(
+                filterBuilder.Eq(e => e.IsPublished, true),
+                filterBuilder.Eq(e => e.IsApproved, true)
+            );
+
 
             if (!string.IsNullOrEmpty(category))
                 filter &= filterBuilder.Eq(e => e.Category, category);
@@ -55,7 +59,11 @@ namespace backend.Repositories
                     new BsonArray { new BsonArray { longitude, latitude }, radiusKm / 6378.1 }));
 
             // Base event filter
-            var baseFilter = filterBuilder.Eq(e => e.IsPublished, true);
+            var baseFilter = filterBuilder.And(
+                filterBuilder.Eq(e => e.IsPublished, true),
+                filterBuilder.Eq(e => e.IsApproved, true)
+            );
+
 
             if (!string.IsNullOrEmpty(category))
                 baseFilter &= filterBuilder.Eq(e => e.Category, category);
@@ -104,5 +112,7 @@ namespace backend.Repositories
 
         public async Task DeleteAsync(string id) =>
             await _events.DeleteOneAsync(e => e.Id == id);
+
+        public async Task<List<Event>> GetAllAsync() => await _events.Find(_ => true).ToListAsync();
     }
 }
