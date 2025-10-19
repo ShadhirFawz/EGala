@@ -25,26 +25,50 @@ namespace backend.Repositories
         public async Task<List<Event>> GetPublicEventsAsync(string? category = null, string? locationName = null, string? keyword = null)
         {
             var filterBuilder = Builders<Event>.Filter;
-            var filter = filterBuilder.And(
+
+            // base filter: only approved and published
+            var baseFilter = filterBuilder.And(
                 filterBuilder.Eq(e => e.IsPublished, true),
                 filterBuilder.Eq(e => e.IsApproved, true)
             );
 
+            // list of possible OR conditions
+            var orFilters = new List<FilterDefinition<Event>>();
 
+            // 1️⃣ Category exact match
             if (!string.IsNullOrEmpty(category))
-                filter &= filterBuilder.Eq(e => e.Category, category);
+                orFilters.Add(filterBuilder.Regex(e => e.Category, new BsonRegularExpression(category, "i")));
 
+            // 2️⃣ Location name contains text (ignore punctuation/numbers)
             if (!string.IsNullOrEmpty(locationName))
-                // match by location name inside Locations array
-                filter &= filterBuilder.ElemMatch(e => e.Locations, Builders<EventLocation>.Filter.Eq(l => l.Name, locationName));
+            {
+                // sanitize location text
+                var cleanLoc = System.Text.RegularExpressions.Regex.Replace(locationName, @"[^\p{L}\s]", "").Trim();
+                orFilters.Add(filterBuilder.ElemMatch(
+                    e => e.Locations,
+                    Builders<EventLocation>.Filter.Regex(
+                        l => l.Name,
+                        new BsonRegularExpression(cleanLoc, "i")
+                    )
+                ));
+            }
 
+            // 3️⃣ Keyword matches in title or description
             if (!string.IsNullOrEmpty(keyword))
-                filter &= filterBuilder.Or(
-                    filterBuilder.Regex(e => e.Title, new BsonRegularExpression(keyword, "i")),
-                    filterBuilder.Regex(e => e.Description, new BsonRegularExpression(keyword, "i"))
-                );
+            {
+                var cleanKey = System.Text.RegularExpressions.Regex.Replace(keyword, @"[^\p{L}\s]", "").Trim();
+                orFilters.Add(filterBuilder.Or(
+                    filterBuilder.Regex(e => e.Title, new BsonRegularExpression(cleanKey, "i")),
+                    filterBuilder.Regex(e => e.Description, new BsonRegularExpression(cleanKey, "i"))
+                ));
+            }
 
-            return await _events.Find(filter).ToListAsync();
+            // combine: base condition + OR logic for any match
+            FilterDefinition<Event> finalFilter = baseFilter;
+            if (orFilters.Count > 0)
+                finalFilter &= filterBuilder.Or(orFilters);
+
+            return await _events.Find(finalFilter).ToListAsync();
         }
 
         public async Task<List<Event>> GetNearbyEventsAsync(double latitude, double longitude, double radiusKm, string? category = null, string? keyword = null)
