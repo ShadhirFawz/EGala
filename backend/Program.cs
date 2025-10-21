@@ -80,7 +80,7 @@ builder.Services.AddSwaggerGen(opt =>
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("AllowFrontend",
-        p => p.WithOrigins("https://localhost:7143", "http://localhost:5143") // Blazor ports
+        p => p.WithOrigins("https://localhost:7143", "http://localhost:5105") // Blazor ports
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
