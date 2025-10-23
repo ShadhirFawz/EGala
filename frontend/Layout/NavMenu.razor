@@ -1,9 +1,13 @@
 ﻿@using Blazored.LocalStorage
 @using MudBlazor
+@using frontend.Auth
+@using frontend.Models
+@using frontend.Services
+@using Microsoft.AspNetCore.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavManager
 @inject ILocalStorageService LocalStorage
-@inject AuthenticationStateProvider AuthProvider
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudMenu>
     <MudMenuItem OnClick="@(() => NavManager.NavigateTo("/"))">Home</MudMenuItem>

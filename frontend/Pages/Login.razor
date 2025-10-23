@@ -1,0 +1,79 @@
+@page "/login"
+
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Authorization
+@using frontend.Auth
+@using frontend.Models
+@using frontend.Services
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthProvider
+
+<MudPaper Class="p-6 max-w-md mx-auto mt-12" Elevation="6">
+    <MudText Typo="Typo.h5" GutterBottom>Login</MudText>
+
+    <MudForm @ref="form" onvalidsubmit="HandleLogin">
+        <MudTextField @bind-Value="model.Email" Label="Email" Required="true" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
+            Variant="Variant.Outlined" />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" ButtonType="ButtonType.Submit"
+            Disabled="@isLoading">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                @:Logging in... @* Fixed: using @: for inline text *@
+            }
+            else
+            {
+                @:Login @* Fixed: using @: for inline text *@
+            }
+        </MudButton>
+    </MudForm>
+
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-3">@error</MudAlert>
+    }
+
+    <MudText Typo="Typo.body2" Class="mt-4">
+        Don’t have an account?
+        <MudLink Href="/register">Register here</MudLink>.
+    </MudText>
+</MudPaper>
+
+@code {
+    private UserLogin model = new();
+    private MudForm form = default!;
+    private bool isLoading = false;
+    private string? error;
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        error = null;
+
+        try
+        {
+            var success = await AuthService.Login(model);
+            if (success)
+            {
+                // refresh auth state
+                if (AuthProvider is AuthStateProvider provider)
+                    provider.NotifyUserChanged();
+
+                NavManager.NavigateTo("/events/public", forceLoad: true);
+            }
+            else
+            {
+                error = "Invalid email or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error: {ex.Message}";
+        }
+
+        isLoading = false;
+    }
+}

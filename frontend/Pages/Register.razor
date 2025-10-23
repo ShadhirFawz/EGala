@@ -1,0 +1,75 @@
+@page "/register"
+@using MudBlazor
+@using frontend.Models
+@using frontend.Services
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+
+<MudPaper Class="p-6 max-w-md mx-auto mt-12" Elevation="6">
+    <MudText Typo="Typo.h5" GutterBottom>Register</MudText>
+
+    <MudForm @ref="form" onvalidsubmit="HandleRegister">
+        <MudTextField @bind-Value="model.Name" Label="Name" Required="true" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="model.Email" Label="Email" Required="true" Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
+            Variant="Variant.Outlined" />
+        <MudSelect @bind-Value="model.Role" Label="Role" Variant="Variant.Outlined">
+            <MudSelectItem Value="@("User")">User</MudSelectItem>
+            <MudSelectItem Value="@("Organizer")">Organizer</MudSelectItem>
+        </MudSelect>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" ButtonType="ButtonType.Submit"
+            Disabled="@isLoading">
+            @if (isLoading)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                @:Registering...
+            }
+            else
+            {
+                @:Register
+            }
+        </MudButton>
+    </MudForm>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <MudAlert Severity="Severity.Info" Class="mt-3">@message</MudAlert>
+    }
+
+    <MudText Typo="Typo.body2" Class="mt-4">
+        Already have an account?
+        <MudLink Href="/login">Login here</MudLink>.
+    </MudText>
+</MudPaper>
+
+@code {
+    private UserRegister model = new();
+    private MudForm form = default!;
+    private bool isLoading = false;
+    private string? message;
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        message = null;
+
+        try
+        {
+            var success = await AuthService.Register(model);
+            message = success ? "Registration successful! Redirecting to login..." : "Registration failed.";
+
+            if (success)
+            {
+                await Task.Delay(1500);
+                NavManager.NavigateTo("/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+
+        isLoading = false;
+    }
+}
