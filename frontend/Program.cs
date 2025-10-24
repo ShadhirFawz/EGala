@@ -16,7 +16,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 // Register services
 builder.Services.AddScoped<ApiClient>();
 builder.Services.AddScoped<AuthService>();
-// builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<EventService>();
 
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();

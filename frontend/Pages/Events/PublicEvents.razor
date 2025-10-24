@@ -1,0 +1,85 @@
+@page "/events/public"
+@inject EventService EventService
+@inject NavigationManager NavManager
+@using frontend.Models
+
+<MudPaper Class="p-6 m-6" Elevation="2">
+    <MudText Typo="Typo.h5" Class="mb-4">Browse Events</MudText>
+
+    <MudGrid Class="mb-4">
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="category" Label="Category" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="location" Label="Location" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="4">
+            <MudTextField @bind-Value="keyword" Label="Keyword" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" sm="12">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadEvents">Search</MudButton>
+        </MudItem>
+    </MudGrid>
+
+    @if (isLoading)
+    {
+        <div class="flex justify-center items-center mt-12">
+            <MudProgressCircular Indeterminate="true" Size="Size.Medium" Color="Color.Primary" />
+        </div>
+    }
+    else if (events.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No events found.</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var ev in events)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <MudCard Class="m-2 hover:shadow-lg transition">
+                        <MudCardMedia Image="@GetEventImage(ev)" Height="160" />
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6">@ev.Title</MudText>
+                            <MudText Typo="Typo.body2" Class="text-gray-600">@ev.Description</MudText>
+                            <MudText Typo="Typo.caption">Category: @ev.Category</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" OnClick="@(() => NavigateToDetails(ev.Id))">
+                                View Details
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudPaper>
+
+@code {
+    private List<EventModel> events = new();
+    private string? category;
+    private string? location;
+    private string? keyword;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvents();
+    }
+
+    private async Task LoadEvents()
+    {
+        isLoading = true;
+        events = await EventService.GetPublicEventsAsync(category, location, keyword);
+        isLoading = false;
+    }
+
+    private string GetEventImage(EventModel ev)
+    => ev.Images?.FirstOrDefault() ?? "https://via.placeholder.com/300x160?text=No+Image";
+
+    private void NavigateToDetails(string id)
+    {
+        NavManager.NavigateTo($"/events/{id}");
+    }
+}
