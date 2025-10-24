@@ -30,5 +30,11 @@ namespace frontend.Services
 
             return await _http.GetFromJsonAsync<List<EventModel>>(url) ?? new List<EventModel>();
         }
+
+        public async Task<EventModel?> GetEventByIdAsync(string id)
+        {
+            var url = $"{_baseUrl}events/{id}";
+            return await _http.GetFromJsonAsync<EventModel>(url);
+        }
     }
 }

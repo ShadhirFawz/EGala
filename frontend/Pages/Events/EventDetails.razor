@@ -1,0 +1,98 @@
+@page "/events/{id}"
+@using MudBlazor
+
+@inject EventService EventService
+@inject NavigationManager NavManager
+@using frontend.Models
+
+<MudPaper Class="p-6 m-6" Elevation="2">
+    @if (isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Size="Size.Medium" Color="Color.Primary" />
+    }
+    else if (eventData == null)
+    {
+        <MudAlert Severity="Severity.Error">Event not found.</MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="6">
+                <MudCard>
+                    <MudCardMedia Image="@GetEventImage(eventData)" Height="250" />
+                </MudCard>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudText Typo="Typo.h4">@eventData.Title</MudText>
+                <MudText Typo="Typo.subtitle1">@eventData.Category</MudText>
+                <MudText Typo="Typo.body1" Class="mt-2">@eventData.Description</MudText>
+
+                <MudDivider Class="my-3" />
+
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Available Dates</MudText>
+                @if (eventData.AvailableDates?.Count > 0)
+                {
+                    <MudList T="string">
+                        @foreach (DateTime d in eventData.AvailableDates)
+                        {
+                            <MudListItem Text="@d.ToString("dd MMM yyyy")" />
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <MudText>No dates available</MudText>
+                }
+
+                <MudDivider Class="my-3" />
+
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Locations</MudText>
+                @if (eventData.Locations?.Count > 0)
+                {
+                    <MudList T="string">
+                        @foreach (EventLocationDTO loc in eventData.Locations)
+                        {
+                            <MudListItem Text="@($"{loc.Name} ({loc.Latitude}, {loc.Longitude})")" />
+                        }
+                    </MudList>
+                }
+                else
+                {
+                    <MudText>No location data available</MudText>
+                }
+
+                <MudDivider Class="my-3" />
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="BookNow">
+                    Book Now
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public string id { get; set; } = string.Empty;
+    private EventModel? eventData;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEvent();
+    }
+
+    private async Task LoadEvent()
+    {
+        isLoading = true;
+        eventData = await EventService.GetEventByIdAsync(id);
+        isLoading = false;
+    }
+
+    private string GetEventImage(EventModel ev)
+    => ev.Images?.FirstOrDefault() ?? "https://via.placeholder.com/600x250?text=No+Image";
+
+    private void BookNow()
+    {
+        NavManager.NavigateTo($"/booking/{id}");
+    }
+}

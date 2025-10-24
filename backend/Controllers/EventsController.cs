@@ -74,7 +74,7 @@ namespace backend.Controllers
 
         // PUBLIC: Get event details by ID
         [HttpGet("{id}")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin,Organizer")]
         public async Task<IActionResult> GetEventById(string id)
         {
             var ev = await _eventService.GetEventByIdAsync(id);
