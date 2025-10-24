@@ -23,6 +23,9 @@ namespace backend.Services
 
         public async Task<Event?> GetByIdAsync(string id) => await _repo.GetByIdAsync(id);
 
+        public async Task<Event?> GetEventByIdAsync(string id)
+            => await _repo.GetByIdAsync(id);
+
         public async Task<List<Event>> GetAllEventsAsync() => await _repo.GetAllAsync();
 
         public async Task CreateEventAsync(Event ev) => await _repo.CreateAsync(ev);

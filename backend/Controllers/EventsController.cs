@@ -72,6 +72,17 @@ namespace backend.Controllers
             return Ok("Event created successfully and awaiting approval!");
         }
 
+        // PUBLIC: Get event details by ID
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetEventById(string id)
+        {
+            var ev = await _eventService.GetEventByIdAsync(id);
+            if (ev == null)
+                return NotFound("Event not found or not published.");
+            return Ok(ev);
+        }
+
         // ORGANIZER: View own events
         [HttpGet("mine")]
         [Authorize(Roles = "Organizer")]
