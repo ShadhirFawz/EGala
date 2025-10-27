@@ -77,12 +77,16 @@ builder.Services.AddSwaggerGen(opt =>
     });
 });
 
-builder.Services.AddCors(opt =>
+builder.Services.AddCors(options =>
 {
-    opt.AddPolicy("AllowFrontend",
-        p => p.WithOrigins("https://localhost:7143", "http://localhost:5105") // Blazor ports
-              .AllowAnyHeader()
-              .AllowAnyMethod());
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5105", "https://localhost:5105") // Both HTTP and HTTPS
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
 });
 
 var app = builder.Build();

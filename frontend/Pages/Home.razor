@@ -2,60 +2,107 @@
 @using MudBlazor
 @inject NavigationManager NavManager
 
-<PageTitle>Event Management - Home</PageTitle>
+<PageTitle>EventFlow Pro - Enterprise Event Management</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudPaper Class="pa-8 text-center" Elevation="8">
-        <MudText Typo="Typo.h3" Color="Color.Primary" GutterBottom>
-            🎉 Welcome to Event Management
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-12">
+    <!-- Hero Section -->
+    <MudPaper Class="pa-12 text-center gradient-hero rounded-xl" Elevation="24">
+        <MudText Typo="Typo.h2" Color="Color.Inherit" GutterBottom Class="font-weight-bold">
+            Enterprise Event Management Platform
         </MudText>
 
-        <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-4">
-            Discover and manage amazing events
+        <MudText Typo="Typo.h6" Color="Color.Inherit" Class="mb-6 opacity-80">
+            Streamline your event operations with our comprehensive management solution
         </MudText>
 
-        <MudDivider Class="my-6" />
+        <MudDivider Class="my-8" color="Color.Inherit" />
 
-        <MudGrid>
-            <MudItem xs="12" sm="6">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudIcon Icon="Icons.Material.Filled.Event" Color="Color.Success" Size="Size.Large" />
-                    <MudText Typo="Typo.h6" Class="mt-2">Browse Events</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-2">
-                        Explore public events and find something that interests you
-                    </MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3"
-                        onclick="@(() => NavManager.NavigateTo("/events/public"))">
-                        View Events
-                    </MudButton>
-                </MudPaper>
+        <!-- Feature Cards Grid -->
+        <MudGrid Spacing="3" Justify="Justify.Center">
+            <!-- Event Discovery Card -->
+            <MudItem xs="12" md="5" Class="mb-4">
+                <MudCard Class="h-100 feature-card" Elevation="8">
+                    <MudCardContent Class="text-center pa-6">
+                        <div class="icon-container mb-4">
+                            <MudIcon Icon="Icons.Material.Filled.CalendarMonth" Color="Color.Primary"
+                                Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.h6" Class="mb-3 font-weight-medium">
+                            Event Discovery
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                            Explore curated events across multiple categories with advanced filtering and search
+                            capabilities
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                            EndIcon="Icons.Material.Filled.ArrowForward"
+                            OnClick="@(() => NavManager.NavigateTo("/events/public"))" Class="mt-auto">
+                            Browse Events
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
             </MudItem>
 
-            <MudItem xs="12" sm="6">
-                <MudPaper Class="pa-4" Elevation="2">
-                    <MudIcon Icon="Icons.Material.Filled.Person" Color="Color.Info" Size="Size.Large" />
-                    <MudText Typo="Typo.h6" Class="mt-2">Get Started</MudText>
-                    <MudText Typo="Typo.body2" Class="mt-2">
-                        Register as a user or organizer to start managing events
-                    </MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="mt-3"
-                        onclick="@(() => NavManager.NavigateTo("/register"))">
-                        Sign Up
-                    </MudButton>
-                </MudPaper>
+            <!-- Account Management Card -->
+            <MudItem xs="12" md="5" Class="mb-4">
+                <MudCard Class="h-100 feature-card" Elevation="8">
+                    <MudCardContent Class="text-center pa-6">
+                        <div class="icon-container mb-4">
+                            <MudIcon Icon="Icons.Material.Filled.ManageAccounts" Color="Color.Secondary"
+                                Size="Size.Large" />
+                        </div>
+                        <MudText Typo="Typo.h6" Class="mb-3 font-weight-medium">
+                            Account Management
+                        </MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+                            Register as an attendee or event organizer with role-based access and comprehensive
+                            management tools
+                        </MudText>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Large"
+                            EndIcon="Icons.Material.Filled.PersonAdd"
+                            OnClick="@(() => NavManager.NavigateTo("/register"))" Class="mt-auto">
+                            Create Account
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
             </MudItem>
         </MudGrid>
 
-        <MudDivider Class="my-6" />
+        <!-- Call to Action Section -->
+        <div class="cta-section mt-10">
+            <MudText Typo="Typo.h6" Color="Color.Inherit" Class="mb-4">
+                Ready to get started?
+            </MudText>
 
-        <MudButton Variant="Variant.Outlined" Color="Color.Primary" onclick="@(() => NavManager.NavigateTo("/login"))"
-            Class="mr-3">
-            Login
-        </MudButton>
+            <div class="action-buttons">
+                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Large"
+                    StartIcon="Icons.Material.Filled.Login" OnClick="@(() => NavManager.NavigateTo("/login"))"
+                    Class="mr-4 action-btn">
+                    Sign In
+                </MudButton>
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-            onclick="@(() => NavManager.NavigateTo("/events/public"))">
-            Explore All Events
-        </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Inherit" Size="Size.Large"
+                    StartIcon="Icons.Material.Filled.Explore" OnClick="@(() => NavManager.NavigateTo("/events/public"))"
+                    Class="action-btn">
+                    Explore Platform
+                </MudButton>
+            </div>
+        </div>
     </MudPaper>
+
+    <!-- Stats Section -->
+    <MudGrid Class="mt-16" Spacing="3" Justify="Justify.Center">
+        <MudItem xs="12" sm="4" Class="text-center">
+            <MudText Typo="Typo.h3" Color="Color.Primary" Class="font-weight-bold">500+</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Events Managed</MudText>
+        </MudItem>
+        <MudItem xs="12" sm="4" Class="text-center">
+            <MudText Typo="Typo.h3" Color="Color.Primary" Class="font-weight-bold">10K+</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Active Users</MudText>
+        </MudItem>
+        <MudItem xs="12" sm="4" Class="text-center">
+            <MudText Typo="Typo.h3" Color="Color.Primary" Class="font-weight-bold">99.9%</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Uptime Reliability</MudText>
+        </MudItem>
+    </MudGrid>
 </MudContainer>

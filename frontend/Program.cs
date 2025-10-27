@@ -10,8 +10,11 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 
 // Base API URL (adjust if needed)
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5000/api/";
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) }); // Changed this line
+builder.Services.AddScoped(sp =>
+    new HttpClient
+    {
+        BaseAddress = new Uri("https://localhost:5203/api/") // Your backend URL
+    });
 
 // Register services
 builder.Services.AddScoped<ApiClient>();

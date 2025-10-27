@@ -8,25 +8,27 @@
 @inject AuthService AuthService
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthProvider
+@inject ILocalStorageService LocalStorage
 
 <MudPaper Class="p-6 max-w-md mx-auto mt-12" Elevation="6">
     <MudText Typo="Typo.h5" GutterBottom>Login</MudText>
 
-    <MudForm @ref="form" onvalidsubmit="HandleLogin">
-        <MudTextField @bind-Value="model.Email" Label="Email" Required="true" Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
+    <MudForm @ref="form" Model="model" onvalidsubmit="HandleLogin">
+        <MudTextField @bind-Value="model.Email" Label="Email" Required="true" For="@(() => model.Email)"
             Variant="Variant.Outlined" />
+        <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
+            For="@(() => model.Password)" Variant="Variant.Outlined" />
 
         <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" ButtonType="ButtonType.Submit"
             Disabled="@isLoading">
             @if (isLoading)
             {
                 <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
-                @:Logging in... @* Fixed: using @: for inline text *@
+                <span>Logging in...</span>
             }
             else
             {
-                @:Login @* Fixed: using @: for inline text *@
+                <span>Login</span>
             }
         </MudButton>
     </MudForm>
@@ -36,8 +38,16 @@
         <MudAlert Severity="Severity.Error" Class="mt-3">@error</MudAlert>
     }
 
+    <!-- Debug Information -->
+    <MudPaper Class="mt-4 p-3" Elevation="1">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">Debug Info:</MudText>
+        <MudText Typo="Typo.body2">Email: @model.Email</MudText>
+        <MudText Typo="Typo.body2">Loading: @isLoading</MudText>
+        <MudText Typo="Typo.body2">Error: @(error ?? "None")</MudText>
+    </MudPaper>
+
     <MudText Typo="Typo.body2" Class="mt-4">
-        Don’t have an account?
+        Don't have an account?
         <MudLink Href="/register">Register here</MudLink>.
     </MudText>
 </MudPaper>
@@ -48,32 +58,86 @@
     private bool isLoading = false;
     private string? error;
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if already logged in
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        Console.WriteLine($"OnInitialized - Token exists: {!string.IsNullOrEmpty(token)}");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            Console.WriteLine("Already has token, redirecting to events...");
+            NavManager.NavigateTo("/events/public");
+        }
+
+        await base.OnInitializedAsync();
+    }
+
     private async Task HandleLogin()
     {
+        await form.Validate();
+
+        if (!form.IsValid)
+        {
+            error = "Please fix validation errors";
+            return;
+        }
+
         isLoading = true;
         error = null;
+        StateHasChanged();
 
         try
         {
+            Console.WriteLine($"Attempting login for: {model.Email}");
+
             var success = await AuthService.Login(model);
+            Console.WriteLine($"Login service result: {success}");
+
             if (success)
             {
-                // refresh auth state
-                if (AuthProvider is AuthStateProvider provider)
-                    provider.NotifyUserChanged();
+                // Verify token was stored
+                var token = await LocalStorage.GetItemAsync<string>("authToken");
+                Console.WriteLine($"Token stored: {!string.IsNullOrEmpty(token)}");
 
-                NavManager.NavigateTo("/events/public", forceLoad: true);
+                if (!string.IsNullOrEmpty(token))
+                {
+                    Console.WriteLine("Token verification successful");
+
+                    // Force authentication state update
+                    if (AuthProvider is AuthStateProvider provider)
+                    {
+                        Console.WriteLine("Notifying auth state changed");
+                        provider.NotifyUserAuthenticationStateChanged();
+                    }
+
+                    // Small delay to ensure state is updated
+                    await Task.Delay(100);
+
+                    Console.WriteLine("Navigating to /events/public");
+                    NavManager.NavigateTo("/events/public", forceLoad: true);
+                }
+                else
+                {
+                    error = "Login failed: No token received";
+                    Console.WriteLine("Login failed - no token in storage");
+                }
             }
             else
             {
-                error = "Invalid email or password.";
+                error = "Invalid email or password. Please check your credentials.";
+                Console.WriteLine("Login service returned false");
             }
         }
         catch (Exception ex)
         {
-            error = $"Error: {ex.Message}";
+            error = $"Login error: {ex.Message}";
+            Console.WriteLine($"Login exception: {ex}");
         }
-
-        isLoading = false;
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 }
