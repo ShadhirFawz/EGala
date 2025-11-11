@@ -1,77 +1,136 @@
 @page "/login"
-
-@using MudBlazor
-@using Microsoft.AspNetCore.Components.Authorization
-@using frontend.Auth
+@using Microsoft.AspNetCore.Components
 @using frontend.Models
 @using frontend.Services
 @inject AuthService AuthService
 @inject NavigationManager NavManager
-@inject AuthenticationStateProvider AuthProvider
 @inject ILocalStorageService LocalStorage
 
-<MudPaper Class="p-6 max-w-md mx-auto mt-12" Elevation="6">
-    <MudText Typo="Typo.h5" GutterBottom>Login</MudText>
+<PageTitle>EventFlow Pro - Sign In</PageTitle>
 
-    <MudForm @ref="form" Model="model" onvalidsubmit="HandleLogin">
-        <MudTextField @bind-Value="model.Email" Label="Email" Required="true" For="@(() => model.Email)"
-            Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password" Required="true"
-            For="@(() => model.Password)" Variant="Variant.Outlined" />
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <!-- Login Card -->
+    <MudPaper Class="pa-8 rounded-xl" Elevation="8">
+        <!-- Header Section -->
+        <div class="text-center mb-6">
+            <MudIcon Icon="Icons.Material.Filled.Event" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+            <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom Class="font-weight-bold">
+                Welcome Back
+            </MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">
+                Sign in to your EventFlow Pro account
+            </MudText>
+        </div>
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" ButtonType="ButtonType.Submit"
-            Disabled="@isLoading">
-            @if (isLoading)
-            {
-                <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
-                <span>Logging in...</span>
-            }
-            else
-            {
-                <span>Login</span>
-            }
-        </MudButton>
-    </MudForm>
+        <MudDivider Class="my-6" />
 
-    @if (!string.IsNullOrEmpty(error))
-    {
-        <MudAlert Severity="Severity.Error" Class="mt-3">@error</MudAlert>
-    }
+        <!-- Login Form -->
+        <MudForm @ref="form" Model="model">
+            <MudTextField @bind-Value="model.Email" Label="Email Address" Variant="Variant.Outlined"
+                For="@(() => model.Email)" Required="true" StartIcon="Icons.Material.Filled.Email" Class="mb-4"
+                Placeholder="Enter your email" />
 
-    <!-- Debug Information -->
-    <MudPaper Class="mt-4 p-3" Elevation="1">
-        <MudText Typo="Typo.body2" Color="Color.Secondary">Debug Info:</MudText>
-        <MudText Typo="Typo.body2">Email: @model.Email</MudText>
-        <MudText Typo="Typo.body2">Loading: @isLoading</MudText>
-        <MudText Typo="Typo.body2">Error: @(error ?? "None")</MudText>
+            <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password"
+                Variant="Variant.Outlined" For="@(() => model.Password)" Required="true"
+                StartIcon="Icons.Material.Filled.Lock" Class="mb-2" Placeholder="Enter your password" />
+
+            <!-- Forgot Password Link -->
+            <div class="text-right mb-4">
+                <MudLink Href="/forgot-password" Typo="Typo.body2" Color="Color.Primary">
+                    Forgot your password?
+                </MudLink>
+            </div>
+
+            <!-- Login Button -->
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true"
+                EndIcon="Icons.Material.Filled.ArrowForward" OnClick="HandleLogin" Disabled="@isLoading" Class="mb-2">
+                @if (isLoading)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                    <span>Signing In...</span>
+                }
+                else
+                {
+                    <span>Sign In</span>
+                }
+            </MudButton>
+        </MudForm>
+
+        <!-- Error Message -->
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled">
+                <MudText>Authentication Failed</MudText>
+                @error
+            </MudAlert>
+        }
+
+        <!-- Success Message -->
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <MudAlert Severity="Severity.Success" Class="mb-4" Variant="Variant.Filled">
+                <MudText>Success</MudText>
+                @successMessage
+            </MudAlert>
+        }
+
+        <!-- Divider -->
+        <div class="text-center my-6">
+            <MudDivider>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">OR</MudText>
+            </MudDivider>
+        </div>
+
+        <!-- Alternative Options -->
+        <MudGrid Spacing="2" Justify="Justify.Center">
+            <MudItem xs="12" sm="6">
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                    StartIcon="Icons.Material.Filled.PersonAdd" OnClick="@(() => NavManager.NavigateTo("/register"))">
+                    Create Account
+                </MudButton>
+            </MudItem>
+            <MudItem xs="12" sm="6">
+                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
+                    StartIcon="Icons.Material.Filled.Explore"
+                    OnClick="@(() => NavManager.NavigateTo("/events/public"))">
+                    Browse Events
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <!-- Quick Stats -->
+        <MudPaper Class="pa-4 mt-6 text-center rounded-lg" Elevation="1">
+            <MudGrid Spacing="3">
+                <MudItem xs="4">
+                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">500+</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Events</MudText>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">10K+</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Users</MudText>
+                </MudItem>
+                <MudItem xs="4">
+                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">99.9%</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Uptime</MudText>
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
     </MudPaper>
 
-    <MudText Typo="Typo.body2" Class="mt-4">
-        Don't have an account?
-        <MudLink Href="/register">Register here</MudLink>.
-    </MudText>
-</MudPaper>
+    <!-- Bottom CTA -->
+    <div class="text-center mt-6">
+        <MudText Typo="Typo.body2" Color="Color.Secondary">
+            Need help? <MudLink Href="/contact" Color="Color.Primary">Contact Support</MudLink>
+        </MudText>
+    </div>
+</MudContainer>
 
 @code {
     private UserLogin model = new();
-    private MudForm form = default!;
+    private MudForm form = new();
     private bool isLoading = false;
     private string? error;
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Check if already logged in
-        var token = await LocalStorage.GetItemAsync<string>("authToken");
-        Console.WriteLine($"OnInitialized - Token exists: {!string.IsNullOrEmpty(token)}");
-
-        if (!string.IsNullOrEmpty(token))
-        {
-            Console.WriteLine("Already has token, redirecting to events...");
-            NavManager.NavigateTo("/events/public");
-        }
-
-        await base.OnInitializedAsync();
-    }
+    private string? successMessage;
 
     private async Task HandleLogin()
     {
@@ -79,60 +138,48 @@
 
         if (!form.IsValid)
         {
-            error = "Please fix validation errors";
+            error = "Please fill in all required fields correctly.";
             return;
         }
 
         isLoading = true;
         error = null;
+        successMessage = null;
         StateHasChanged();
 
         try
         {
-            Console.WriteLine($"Attempting login for: {model.Email}");
-
             var success = await AuthService.Login(model);
-            Console.WriteLine($"Login service result: {success}");
 
             if (success)
             {
+                successMessage = "Login successful! Redirecting to your dashboard...";
+                StateHasChanged();
+
                 // Verify token was stored
                 var token = await LocalStorage.GetItemAsync<string>("authToken");
-                Console.WriteLine($"Token stored: {!string.IsNullOrEmpty(token)}");
-
                 if (!string.IsNullOrEmpty(token))
                 {
-                    Console.WriteLine("Token verification successful");
+                    // Wait a moment to show success message
+                    await Task.Delay(1500);
 
-                    // Force authentication state update
-                    if (AuthProvider is AuthStateProvider provider)
-                    {
-                        Console.WriteLine("Notifying auth state changed");
-                        provider.NotifyUserAuthenticationStateChanged();
-                    }
-
-                    // Small delay to ensure state is updated
-                    await Task.Delay(100);
-
-                    Console.WriteLine("Navigating to /events/public");
-                    NavManager.NavigateTo("/events/public", forceLoad: true);
+                    // Navigate to home page
+                    NavManager.NavigateTo("/", forceLoad: true);
                 }
                 else
                 {
-                    error = "Login failed: No token received";
-                    Console.WriteLine("Login failed - no token in storage");
+                    error = "Authentication failed. Please try again.";
+                    successMessage = null;
                 }
             }
             else
             {
-                error = "Invalid email or password. Please check your credentials.";
-                Console.WriteLine("Login service returned false");
+                error = "Invalid email or password. Please check your credentials and try again.";
             }
         }
         catch (Exception ex)
         {
-            error = $"Login error: {ex.Message}";
-            Console.WriteLine($"Login exception: {ex}");
+            error = $"An error occurred during login: {ex.Message}";
         }
         finally
         {

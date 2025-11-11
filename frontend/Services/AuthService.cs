@@ -25,37 +25,34 @@ namespace frontend.Services
         {
             try
             {
-                Console.WriteLine($"Sending login request to: {_http.BaseAddress}auth/login");
-                Console.WriteLine($"Email: {model.Email}, Password length: {model.Password?.Length}");
-
+                // FIX: Use the correct endpoint - your backend has [Route("api/[controller]")]
                 var response = await _http.PostAsJsonAsync("auth/login", model);
 
-                Console.WriteLine($"Response status: {response.StatusCode}");
+                Console.WriteLine($"Login Response Status: {response.StatusCode}");
+                Console.WriteLine($"Request URL: {_http.BaseAddress}auth/login");
 
-                if (!response.IsSuccessStatusCode)
+                if (response.IsSuccessStatusCode)
+                {
+                    var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+
+                    if (!string.IsNullOrEmpty(result?.Token))
+                    {
+                        await _localStorage.SetItemAsync("authToken", result.Token);
+                        Console.WriteLine("✅ Login successful - Token stored");
+                        return true;
+                    }
+                }
+                else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Error response: {errorContent}");
-                    return false;
+                    Console.WriteLine($"❌ Login failed: {response.StatusCode} - {errorContent}");
                 }
 
-                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
-                Console.WriteLine($"Login response - Token: {!string.IsNullOrEmpty(result?.Token)}, Role: {result?.Role}");
-
-                if (result?.Token == null)
-                {
-                    Console.WriteLine("No token in response");
-                    return false;
-                }
-
-                await _localStorage.SetItemAsync("authToken", result.Token);
-                Console.WriteLine("Token stored successfully");
-                return true;
+                return false;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Login exception: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                Console.WriteLine($"💥 Login exception: {ex.Message}");
                 return false;
             }
         }
@@ -63,6 +60,21 @@ namespace frontend.Services
         public async Task Logout()
         {
             await _localStorage.RemoveItemAsync("authToken");
+        }
+
+        public async Task<bool> TestConnection()
+        {
+            try
+            {
+                var response = await _http.GetAsync("auth/test");
+                Console.WriteLine($"Connection test: {response.StatusCode}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Connection test failed: {ex.Message}");
+                return false;
+            }
         }
     }
 

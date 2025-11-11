@@ -82,7 +82,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5105", "https://localhost:5105") // Both HTTP and HTTPS
+            policy.WithOrigins("http://localhost:5105") // Both HTTP and HTTPS
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();

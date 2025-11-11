@@ -22,6 +22,18 @@ namespace backend.Controllers
             _jwtService = jwtService;
         }
 
+        // Add this method to your AuthController
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return Ok(new
+            {
+                message = "Backend API is working!",
+                timestamp = DateTime.UtcNow,
+                service = "AuthController"
+            });
+        }
+
         // Email-based Registration
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)

@@ -5,15 +5,17 @@ using frontend.Auth;
 using MudBlazor.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using frontend;
+using Microsoft.AspNetCore.Components.Web;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Base API URL (adjust if needed)
 builder.Services.AddScoped(sp =>
     new HttpClient
     {
-        BaseAddress = new Uri("https://localhost:5203/api/") // Your backend URL
+        BaseAddress = new Uri("http://localhost:5203/api/") // Your backend URL
     });
 
 // Register services
