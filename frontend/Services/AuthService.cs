@@ -1,6 +1,8 @@
 using frontend.Models;
 using Blazored.LocalStorage;
 using System.Net.Http.Json;
+using frontend.Auth;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace frontend.Services
 {
@@ -8,11 +10,13 @@ namespace frontend.Services
     {
         private readonly HttpClient _http;
         private readonly ILocalStorageService _localStorage;
+        private readonly AuthStateProvider _authStateProvider;
 
-        public AuthService(HttpClient http, ILocalStorageService localStorage)
+        public AuthService(HttpClient http, ILocalStorageService localStorage, AuthenticationStateProvider authStateProvider)
         {
             _http = http;
             _localStorage = localStorage;
+            _authStateProvider = (AuthStateProvider)authStateProvider;
         }
 
         public async Task<bool> Register(UserRegister model)
@@ -25,7 +29,6 @@ namespace frontend.Services
         {
             try
             {
-                // FIX: Use the correct endpoint - your backend has [Route("api/[controller]")]
                 var response = await _http.PostAsJsonAsync("auth/login", model);
 
                 Console.WriteLine($"Login Response Status: {response.StatusCode}");
@@ -39,6 +42,9 @@ namespace frontend.Services
                     {
                         await _localStorage.SetItemAsync("authToken", result.Token);
                         Console.WriteLine("✅ Login successful - Token stored");
+
+                        // Notify authentication state change
+                        _authStateProvider.NotifyUserAuthenticationStateChanged();
                         return true;
                     }
                 }
@@ -60,21 +66,7 @@ namespace frontend.Services
         public async Task Logout()
         {
             await _localStorage.RemoveItemAsync("authToken");
-        }
-
-        public async Task<bool> TestConnection()
-        {
-            try
-            {
-                var response = await _http.GetAsync("auth/test");
-                Console.WriteLine($"Connection test: {response.StatusCode}");
-                return response.IsSuccessStatusCode;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Connection test failed: {ex.Message}");
-                return false;
-            }
+            _authStateProvider.NotifyUserAuthenticationStateChanged();
         }
     }
 

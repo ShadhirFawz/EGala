@@ -29,8 +29,15 @@ namespace backend.Controllers
             [FromQuery] string? location,
             [FromQuery] string? keyword)
         {
-            var events = await _eventService.GetPublicEventsAsync(category, location, keyword);
-            return Ok(events);
+            try
+            {
+                var events = await _eventService.GetPublicEventsAsync(category, location, keyword);
+                return Ok(events);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+            }
         }
 
         // ORGANIZER: Create event (organizer does NOT add ticket packages)
@@ -74,13 +81,20 @@ namespace backend.Controllers
 
         // PUBLIC: Get event details by ID
         [HttpGet("{id}")]
-        [Authorize(Roles = "Admin,Organizer")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetEventById(string id)
         {
-            var ev = await _eventService.GetEventByIdAsync(id);
-            if (ev == null)
-                return NotFound("Event not found or not published.");
-            return Ok(ev);
+            try
+            {
+                var ev = await _eventService.GetEventByIdAsync(id);
+                if (ev == null || !ev.IsPublished || !ev.IsApproved)
+                    return NotFound("Event not found or not available.");
+                return Ok(ev);
+            }
+            catch (System.Exception ex)
+            {
+                return StatusCode(500, new { error = "Internal server error", details = ex.Message });
+            }
         }
 
         // ORGANIZER: View own events

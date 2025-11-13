@@ -8,45 +8,45 @@
 
 <PageTitle>EventFlow Pro - Sign In</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+<MudContainer maxwidth="MaxWidth.Medium" class="mt-8">
     <!-- Login Card -->
-    <MudPaper Class="pa-8 rounded-xl" Elevation="8">
+    <MudPaper class="pa-8 rounded-xl" elevation="8">
         <!-- Header Section -->
         <div class="text-center mb-6">
-            <MudIcon Icon="Icons.Material.Filled.Event" Color="Color.Primary" Size="Size.Large" Class="mb-3" />
-            <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom Class="font-weight-bold">
+            <MudIcon icon="Icons.Material.Filled.Event" color="Color.Primary" size="Size.Large" class="mb-3" />
+            <MudText typo="Typo.h4" color="Color.Primary" gutterbottom="true" class="font-weight-bold">
                 Welcome Back
             </MudText>
-            <MudText Typo="Typo.body1" Color="Color.Secondary">
+            <MudText typo="Typo.body1" color="Color.Secondary">
                 Sign in to your EventFlow Pro account
             </MudText>
         </div>
 
-        <MudDivider Class="my-6" />
+        <MudDivider class="my-6" />
 
         <!-- Login Form -->
-        <MudForm @ref="form" Model="model">
-            <MudTextField @bind-Value="model.Email" Label="Email Address" Variant="Variant.Outlined"
-                For="@(() => model.Email)" Required="true" StartIcon="Icons.Material.Filled.Email" Class="mb-4"
-                Placeholder="Enter your email" />
+        <MudForm @ref="form" model="model">
+            <MudTextField @bind-Value="model.Email" label="Email Address" variant="Variant.Outlined"
+                for="@(() => model.Email)" required="true" starticon="Icons.Material.Filled.Email" class="mb-4"
+                placeholder="Enter your email" />
 
-            <MudTextField @bind-Value="model.Password" Label="Password" InputType="InputType.Password"
-                Variant="Variant.Outlined" For="@(() => model.Password)" Required="true"
-                StartIcon="Icons.Material.Filled.Lock" Class="mb-2" Placeholder="Enter your password" />
+            <MudTextField @bind-Value="model.Password" label="Password" inputtype="InputType.Password"
+                variant="Variant.Outlined" for="@(() => model.Password)" required="true"
+                starticon="Icons.Material.Filled.Lock" class="mb-2" placeholder="Enter your password" />
 
             <!-- Forgot Password Link -->
             <div class="text-right mb-4">
-                <MudLink Href="/forgot-password" Typo="Typo.body2" Color="Color.Primary">
+                <MudLink href="/forgot-password" typo="Typo.body2" color="Color.Primary">
                     Forgot your password?
                 </MudLink>
             </div>
 
             <!-- Login Button -->
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true"
-                EndIcon="Icons.Material.Filled.ArrowForward" OnClick="HandleLogin" Disabled="@isLoading" Class="mb-2">
+            <MudButton variant="Variant.Filled" color="Color.Primary" size="Size.Large" fullwidth="true"
+                endicon="Icons.Material.Filled.ArrowForward" onclick="HandleLogin" disabled="@isLoading" class="mb-2">
                 @if (isLoading)
                 {
-                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                    <MudProgressCircular indeterminate="true" size="Size.Small" class="mr-2" />
                     <span>Signing In...</span>
                 }
                 else
@@ -59,7 +59,7 @@
         <!-- Error Message -->
         @if (!string.IsNullOrEmpty(error))
         {
-            <MudAlert Severity="Severity.Error" Class="mb-4" Variant="Variant.Filled">
+            <MudAlert severity="Severity.Error" class="mb-4" variant="Variant.Filled">
                 <MudText>Authentication Failed</MudText>
                 @error
             </MudAlert>
@@ -68,50 +68,52 @@
         <!-- Success Message -->
         @if (!string.IsNullOrEmpty(successMessage))
         {
-            <MudAlert Severity="Severity.Success" Class="mb-4" Variant="Variant.Filled">
+            <MudAlert severity="Severity.Success" class="mb-4" variant="Variant.Filled">
                 <MudText>Success</MudText>
                 @successMessage
             </MudAlert>
         }
 
-        <!-- Divider -->
+        <!-- Divider with Text -->
         <div class="text-center my-6">
-            <MudDivider>
-                <MudText Typo="Typo.caption" Color="Color.Secondary">OR</MudText>
-            </MudDivider>
+            <div class="divider-with-text">
+                <MudDivider class="flex-grow-1" />
+                <MudText typo="Typo.caption" color="Color.Secondary" class="px-3">OR</MudText>
+                <MudDivider class="flex-grow-1" />
+            </div>
         </div>
 
         <!-- Alternative Options -->
-        <MudGrid Spacing="2" Justify="Justify.Center">
+        <MudGrid spacing="2" justify="Justify.Center">
             <MudItem xs="12" sm="6">
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
-                    StartIcon="Icons.Material.Filled.PersonAdd" OnClick="@(() => NavManager.NavigateTo("/register"))">
+                <MudButton variant="Variant.Outlined" color="Color.Secondary" fullwidth="true"
+                    starticon="Icons.Material.Filled.PersonAdd" onclick="@(() => NavManager.NavigateTo("/register"))">
                     Create Account
                 </MudButton>
             </MudItem>
             <MudItem xs="12" sm="6">
-                <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true"
-                    StartIcon="Icons.Material.Filled.Explore"
-                    OnClick="@(() => NavManager.NavigateTo("/events/public"))">
+                <MudButton variant="Variant.Outlined" color="Color.Secondary" fullwidth="true"
+                    starticon="Icons.Material.Filled.Explore"
+                    onclick="@(() => NavManager.NavigateTo("/events/public"))">
                     Browse Events
                 </MudButton>
             </MudItem>
         </MudGrid>
 
         <!-- Quick Stats -->
-        <MudPaper Class="pa-4 mt-6 text-center rounded-lg" Elevation="1">
-            <MudGrid Spacing="3">
+        <MudPaper class="pa-4 mt-6 text-center rounded-lg" elevation="1">
+            <MudGrid spacing="3">
                 <MudItem xs="4">
-                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">500+</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Events</MudText>
+                    <MudText typo="Typo.h6" color="Color.Primary" class="font-weight-bold">500+</MudText>
+                    <MudText typo="Typo.caption" color="Color.Secondary">Events</MudText>
                 </MudItem>
                 <MudItem xs="4">
-                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">10K+</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Users</MudText>
+                    <MudText typo="Typo.h6" color="Color.Primary" class="font-weight-bold">10K+</MudText>
+                    <MudText typo="Typo.caption" color="Color.Secondary">Users</MudText>
                 </MudItem>
                 <MudItem xs="4">
-                    <MudText Typo="Typo.h6" Color="Color.Primary" Class="font-weight-bold">99.9%</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">Uptime</MudText>
+                    <MudText typo="Typo.h6" color="Color.Primary" class="font-weight-bold">99.9%</MudText>
+                    <MudText typo="Typo.caption" color="Color.Secondary">Uptime</MudText>
                 </MudItem>
             </MudGrid>
         </MudPaper>
@@ -119,11 +121,23 @@
 
     <!-- Bottom CTA -->
     <div class="text-center mt-6">
-        <MudText Typo="Typo.body2" Color="Color.Secondary">
-            Need help? <MudLink Href="/contact" Color="Color.Primary">Contact Support</MudLink>
+        <MudText typo="Typo.body2" color="Color.Secondary">
+            Need help? <MudLink href="/contact" color="Color.Primary">Contact Support</MudLink>
         </MudText>
     </div>
 </MudContainer>
+
+<style>
+    .divider-with-text {
+        display: flex;
+        align-items: center;
+        width: 47%;
+    }
+
+    .divider-with-text .mud-divider {
+        flex-grow: 1;
+    }
+</style>
 
 @code {
     private UserLogin model = new();
@@ -164,7 +178,7 @@
                     await Task.Delay(1500);
 
                     // Navigate to home page
-                    NavManager.NavigateTo("/", forceLoad: true);
+                    NavManager.NavigateTo("/events/public", forceLoad: true);
                 }
                 else
                 {

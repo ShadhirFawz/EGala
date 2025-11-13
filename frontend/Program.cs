@@ -19,15 +19,14 @@ builder.Services.AddScoped(sp =>
     });
 
 // Register services
-builder.Services.AddScoped<ApiClient>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<EventService>();
-
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
-
-// FIX: Register both the implementation and the interface
-builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
+builder.Services.AddScoped<AuthStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<AuthStateProvider>());
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<EventService>();
+builder.Services.AddScoped<ApiClient>();
 
 builder.Services.AddMudServices();
 

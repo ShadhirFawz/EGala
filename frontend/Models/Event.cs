@@ -28,5 +28,8 @@ namespace frontend.Models
         public List<string>? Images { get; set; }
         public bool IsPublished { get; set; }
         public bool IsApproved { get; set; }
+        public string OrganizerId { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

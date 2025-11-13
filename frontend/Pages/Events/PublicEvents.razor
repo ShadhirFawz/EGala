@@ -2,50 +2,93 @@
 @inject EventService EventService
 @inject NavigationManager NavManager
 @using frontend.Models
+@using MudBlazor
 
 <MudPaper Class="p-6 m-6" Elevation="2">
-    <MudText Typo="Typo.h5" Class="mb-4">Browse Events</MudText>
+    <MudText Typo="Typo.h4" GutterBottom>Discover Events</MudText>
+    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+        Browse through our curated collection of events
+    </MudText>
 
-    <MudGrid Class="mb-4">
-        <MudItem xs="12" sm="4">
-            <MudTextField @bind-Value="category" Label="Category" Variant="Variant.Outlined" />
+    <MudGrid Class="mb-4" Spacing="2">
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="category" Label="Category" Variant="Variant.Outlined"
+                Placeholder="e.g., Music, Sports, Conference" Clearable />
         </MudItem>
-        <MudItem xs="12" sm="4">
-            <MudTextField @bind-Value="location" Label="Location" Variant="Variant.Outlined" />
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="location" Label="Location" Variant="Variant.Outlined"
+                Placeholder="e.g., Colombo, Kandy" Clearable />
         </MudItem>
-        <MudItem xs="12" sm="4">
-            <MudTextField @bind-Value="keyword" Label="Keyword" Variant="Variant.Outlined" />
+        <MudItem xs="12" sm="6" md="4">
+            <MudTextField @bind-Value="keyword" Label="Keyword" Variant="Variant.Outlined"
+                Placeholder="Search events..." Clearable />
         </MudItem>
-        <MudItem xs="12" sm="12">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadEvents">Search</MudButton>
+        <MudItem xs="12" Class="mt-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" onclick="LoadEvents"
+                StartIcon="Icons.Material.Filled.Search" Size="Size.Small">
+                Search Events
+            </MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" onclick="ClearFilters" Size="Size.Small"
+                Class="ml-2">
+                Clear
+            </MudButton>
         </MudItem>
     </MudGrid>
+
+    @if (errorMessage != null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">
+            @errorMessage
+        </MudAlert>
+    }
 
     @if (isLoading)
     {
         <div class="flex justify-center items-center mt-12">
             <MudProgressCircular Indeterminate="true" Size="Size.Medium" Color="Color.Primary" />
+            <MudText Typo="Typo.body2" Class="ml-3">Loading events...</MudText>
         </div>
+    }
+    else if (events.Count == 0 && !hasSearched)
+    {
+        <MudAlert Severity="Severity.Info">
+            Start by searching for events using the filters above.
+        </MudAlert>
     }
     else if (events.Count == 0)
     {
-        <MudAlert Severity="Severity.Info">No events found.</MudAlert>
+        <MudAlert Severity="Severity.Warning" Class="text-center">
+            <MudIcon Icon="Icons.Material.Filled.EventBusy" Class="mr-2" />
+            No events found matching your criteria. Try adjusting your search filters.
+        </MudAlert>
     }
     else
     {
-        <MudGrid>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+            Found @events.Count event@(events.Count != 1 ? "s" : "")
+        </MudText>
+
+        <MudGrid Spacing="2">
             @foreach (var ev in events)
             {
                 <MudItem xs="12" sm="6" md="4" lg="3">
-                    <MudCard Class="m-2 hover:shadow-lg transition">
-                        <MudCardMedia Image="@GetEventImage(ev)" Height="160" />
-                        <MudCardContent>
-                            <MudText Typo="Typo.h6">@ev.Title</MudText>
-                            <MudText Typo="Typo.body2" Class="text-gray-600">@ev.Description</MudText>
-                            <MudText Typo="Typo.caption">Category: @ev.Category</MudText>
+                    <MudCard Class="h-100 hover:shadow-lg transition-all duration-300" Elevation="1">
+                        <MudCardMedia Image="@GetEventImage(ev)" Height="180" Class="cursor-pointer"
+                            onclick="@(() => NavigateToDetails(ev.Id))" />
+
+                        <MudCardContent Class="flex-grow-1">
+                            <MudText Typo="Typo.h6" Class="line-clamp-2 mb-1">@ev.Title</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled" Class="mb-2">
+                                @ev.Category
+                            </MudChip>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="line-clamp-2">
+                                @GetShortDescription(ev.Description)
+                            </MudText>
                         </MudCardContent>
+
                         <MudCardActions>
-                            <MudButton Variant="Variant.Text" OnClick="@(() => NavigateToDetails(ev.Id))">
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" onclick="@(() => NavigateToDetails(ev.Id))"
+                                EndIcon="Icons.Material.Filled.ArrowForward" Size="Size.Small">
                                 View Details
                             </MudButton>
                         </MudCardActions>
@@ -62,21 +105,63 @@
     private string? location;
     private string? keyword;
     private bool isLoading = false;
+    private string? errorMessage;
+    private bool hasSearched = false;
 
-    protected override async Task OnInitializedAsync()
+    @* protected override async Task OnInitializedAsync()
     {
-        await LoadEvents();
-    }
+        // Optionally load some initial events
+        // await LoadEvents();
+    } *@
 
     private async Task LoadEvents()
     {
         isLoading = true;
-        events = await EventService.GetPublicEventsAsync(category, location, keyword);
-        isLoading = false;
+        errorMessage = null;
+        hasSearched = true;
+        StateHasChanged(); // Force UI update
+
+        try
+        {
+            events = await EventService.GetPublicEventsAsync(category, location, keyword);
+
+            if (events == null)
+            {
+                errorMessage = "Failed to load events. Please try again.";
+                events = new List<EventModel>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading events: {ex.Message}";
+            events = new List<EventModel>();
+            Console.WriteLine($"Error in LoadEvents: {ex}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        category = null;
+        location = null;
+        keyword = null;
+        await LoadEvents();
     }
 
     private string GetEventImage(EventModel ev)
-    => ev.Images?.FirstOrDefault() ?? "https://via.placeholder.com/300x160?text=No+Image";
+    {
+        return ev.Images?.FirstOrDefault() ?? "https://via.placeholder.com/300x180/4A5568/FFFFFF?text=No+Image+Available";
+    }
+
+    private string GetShortDescription(string description)
+    {
+        if (string.IsNullOrEmpty(description)) return "No description available";
+        return description.Length > 100 ? description.Substring(0, 100) + "..." : description;
+    }
 
     private void NavigateToDetails(string id)
     {
